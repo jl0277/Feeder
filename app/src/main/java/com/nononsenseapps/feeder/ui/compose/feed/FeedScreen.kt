@@ -71,6 +71,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -146,9 +149,6 @@ import com.nononsenseapps.feeder.ui.compose.navigation.EditFeedDestination
 import com.nononsenseapps.feeder.ui.compose.navigation.FeedDestination
 import com.nononsenseapps.feeder.ui.compose.navigation.SearchFeedDestination
 import com.nononsenseapps.feeder.ui.compose.navigation.SettingsDestination
-import com.nononsenseapps.feeder.ui.compose.pullrefresh.PullRefreshIndicator
-import com.nononsenseapps.feeder.ui.compose.pullrefresh.pullRefresh
-import com.nononsenseapps.feeder.ui.compose.pullrefresh.rememberPullRefreshState
 import com.nononsenseapps.feeder.ui.compose.readaloud.HideableTTSPlayer
 import com.nononsenseapps.feeder.ui.compose.theme.LocalDimens
 import com.nononsenseapps.feeder.ui.compose.theme.SensibleTopAppBar
@@ -1211,14 +1211,7 @@ fun FeedScreen(
         }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(topAppBarState)
 
-    val pullRefreshState =
-        rememberPullRefreshState(
-            refreshing = isRefreshing,
-            onRefresh = {
-                manuallyTriggeredRefresh = true
-                onRefreshVisible()
-            },
-        )
+    val pullRefreshState = rememberPullToRefreshState()
 
     Scaffold(
         topBar = {
@@ -1305,8 +1298,14 @@ fun FeedScreen(
         modifier =
             modifier
                 // The order is important! PullToRefresh MUST come first
-                .pullRefresh(state = pullRefreshState)
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .pullToRefresh(
+                    state = pullRefreshState,
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        manuallyTriggeredRefresh = true
+                        onRefreshVisible()
+                    },
+                ).nestedScroll(scrollBehavior.nestedScrollConnection)
                 .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal)),
         contentWindowInsets = WindowInsets.statusBars,
     ) { padding ->
@@ -1319,9 +1318,9 @@ fun FeedScreen(
                 Modifier,
             )
 
-            PullRefreshIndicator(
-                isRefreshing,
-                pullRefreshState,
+            PullToRefreshDefaults.Indicator(
+                state = pullRefreshState,
+                isRefreshing = isRefreshing,
                 modifier =
                     Modifier
                         .align(Alignment.TopCenter),
